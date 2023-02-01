@@ -30,5 +30,7 @@ urlpatterns = [
     path('api/v1/register/', RegisterAPI.as_view(), name='register'),
     path('api/v1/getcurrentuserarticles/', CurrentUserArticlesAPIView().as_view()),
     path('api/v1/getuserarticles/<int:pk>/', UserArticlesAPIView().as_view()),
+    path('api/v1/getarticlereviews/<int:pk>/', GetReviewsToArticleAPIView.as_view()),
+    path('api/v1/getarticlesfromcategory/<int:pk>/', GetArticlesFromCategory.as_view()),
     #re_path(r".*", TemplateView.as_view(template_name='index.html')),
 ]

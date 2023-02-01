@@ -9,12 +9,22 @@ class Artcile(models.Model):
     author = models.TextField(blank=True)
     time_create = models.DateTimeField(auto_now_add=True)
     is_published = models.BooleanField(default=True)
+    count_of_likes = models.IntegerField(default=0)
+    count_of_reviews = models.IntegerField(default=0)
     cat = models.ForeignKey('Category', on_delete=models.PROTECT, null=True)
     user = models.ForeignKey(User, verbose_name='User', on_delete= models.CASCADE)
 
     def __str__(self):
         return self.title
 
+class Review(models.Model):
+    user = models.ForeignKey(User, verbose_name='User', on_delete=models.CASCADE)
+    article = models.ForeignKey(Artcile, verbose_name='Article', on_delete=models.CASCADE)
+    content = models.TextField(blank=True)
+    time_create = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.content
 
 class Category(models.Model):
     name = models.CharField(max_length=100, db_index=True)

@@ -2,13 +2,8 @@ import io
 from rest_framework import serializers
 from rest_framework.renderers import JSONRenderer
 
-from .models import Artcile
+from .models import *
 from django.contrib.auth.models import User
-#class ArticleModel:
-#    def __init__ (self, title, content, author):
-#        self.title = title
-#        self.content = content
-#        self.author = author
 
 class ArticleSerializer(serializers.ModelSerializer):
     #user = serializers.HiddenField(default=serializers.CurrentUserDefault())
@@ -20,6 +15,16 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email')
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = "__all__"
+
+class CategorySerizlizer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = "__all__"
 
 # Register Serializer
 class RegisterSerializer(serializers.ModelSerializer):

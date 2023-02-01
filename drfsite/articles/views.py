@@ -6,9 +6,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
-from .models import Artcile
+from .models import *
 from .permissions import IsOwnerOrReadOnly
-from .serializers import ArticleSerializer, RegisterSerializer, UserSerializer
+from .serializers import *
 from django.contrib.auth.models import User
 
 class ArticleAPIList(generics.ListCreateAPIView):
@@ -43,6 +43,18 @@ class CurrentUserArticlesAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return Artcile.objects.filter(user=self.request.user.id)
+
+class GetReviewsToArticleAPIView(generics.ListAPIView):
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        return Review.objects.filter(article=self.kwargs['pk'])
+
+
+class GetArticlesFromCategory(generics.ListAPIView):
+    serializer_class = ArticleSerializer
+    def get_queryset(self):
+        return Artcile.objects.filter(cat=self.kwargs['pk']).order_by('-time_create').exclude(is_published=False)
 
 # Register API
 class RegisterAPI(generics.GenericAPIView):

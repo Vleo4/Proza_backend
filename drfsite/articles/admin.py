@@ -6,3 +6,4 @@ from .models import *
 
 admin.site.register(Artcile)
 admin.site.register(Category)
+admin.site.register(Review)
