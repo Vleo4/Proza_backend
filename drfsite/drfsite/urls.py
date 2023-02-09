@@ -14,18 +14,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include, re_path
-
-from rest_framework import routers, urls
+from django.urls import path, include
 from articles.views import *
-from django.views.generic import TemplateView
-
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/drf-auth/', include('rest_framework.urls')),
     path('api/v1/article/', ArticleAPIList.as_view()),
     path('api/v1/article/<int:pk>/', ArticleAPIUpdate.as_view()),
+    path('api/v1/articlecreate/<int:pk>/', ArticleAPICreate.as_view()),
     path('api/v1/articledelete/<int:pk>/', ArticleAPIDestroy.as_view()),
     path('api/v1/register/', RegisterAPI.as_view(), name='register'),
     path('api/v1/getcurrentuserarticles/', CurrentUserArticlesAPIView().as_view()),
@@ -33,4 +30,8 @@ urlpatterns = [
     path('api/v1/getarticlereviews/<int:pk>/', GetReviewsToArticleAPIView.as_view()),
     path('api/v1/getarticlesfromcategory/<int:pk>/', GetArticlesFromCategory.as_view()),
     #re_path(r".*", TemplateView.as_view(template_name='index.html')),
+    path('api/v1/reviewcreate/', ReviewAPICreate.as_view()),
+    path('api/v1/reviewdelete/<int:pk>/', ReviewAPIDestroy.as_view()),
+    path('api/v1/review/', ReviewAPIList.as_view()),
+    path('api/v1/searcharticle/', SearchArticles.as_view()),
 ]
