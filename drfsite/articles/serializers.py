@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 
 
 class ArticleSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+    cat = serializers.StringRelatedField()
     class Meta:
         model = Artcile
         fields = "__all__"

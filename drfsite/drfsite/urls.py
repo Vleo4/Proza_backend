@@ -1,5 +1,6 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
+from django.views.generic import TemplateView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 from articles.views import *
@@ -15,7 +16,7 @@ urlpatterns = [
     path('api/v1/getuserarticles/<int:pk>/', UserArticlesAPIView().as_view()),
     path('api/v1/getarticlereviews/<int:pk>/', GetReviewsToArticleAPIView.as_view()),
     path('api/v1/getarticlesfromcategory/<int:pk>/', GetArticlesFromCategory.as_view()),
-    #re_path(r".*", TemplateView.as_view(template_name='index.html')),
+    re_path(r".*", TemplateView.as_view(template_name='index.html')),
     path('api/v1/reviewcreate/', ReviewAPICreate.as_view()),
     path('api/v1/reviewdelete/<int:pk>/', ReviewAPIDestroy.as_view()),
     path('api/v1/review/', ReviewAPIList.as_view()),
