@@ -1,4 +1,5 @@
 from django.forms import model_to_dict
+from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework import generics, viewsets, mixins, filters
 from rest_framework.filters import SearchFilter
@@ -8,11 +9,25 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
+from .custom_exceptions import CensorError
 from .models import *
 from .permissions import IsOwnerOrReadOnly
 from .serializers import *
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
+
+
+def censorship(validated_text):
+    text = validated_text.lower().replace('.,#?!', ' ').split()
+    roman_names_list = ['aboba', 'didnt']
+    swearword_count = 0
+    word_count = len(text)
+    for word in text:
+        if word in roman_names_list:
+            swearword_count += 1
+    if swearword_count / word_count >= 0.2:
+        raise CensorError()
+    return True
 
 
 class ArticleAPIList(generics.ListAPIView):
@@ -24,6 +39,18 @@ class ArticleAPIList(generics.ListAPIView):
 class ArticleAPICreate(generics.CreateAPIView):
     serializer_class = ArticlePutSerializer
     permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            censorship(request.data.get("content"))
+        except CensorError:
+            response = JsonResponse({"massage": 'Too much profanity', "status_code": 0})
+            return response
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        article = serializer.save()
+        response = JsonResponse({"massage": 'Published', "status_code": 1})
+        return response
 
 
 class ArticleAPIUpdate(generics.RetrieveUpdateAPIView):
@@ -86,7 +113,7 @@ class RegisterAPI(generics.GenericAPIView):
 
 
 class ReviewAPICreate(generics.CreateAPIView):
-    serializer_class = ReviewSerializer
+    serializer_class = ReviewPutSerializer
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)

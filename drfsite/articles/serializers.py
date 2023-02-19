@@ -24,6 +24,12 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class ReviewPutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = "__all__"
+
+
 class CategorySerizlizer(serializers.ModelSerializer):
     class Meta:
         model = Category
