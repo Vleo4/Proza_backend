@@ -152,17 +152,7 @@ class ArticleAPILike(generics.RetrieveUpdateAPIView):
             return HttpResponseRedirect(reverse('article_detail', args=[str(pk)]))
 
 
-class ArticleAPIComment(generics.RetrieveUpdateAPIView):
-    queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
 
-    def form_valid(self, form):
-        form.instance.article_id = self.kwargs['pk']
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return self.object.get_absolute_url()
 
 
 

@@ -25,5 +25,5 @@ urlpatterns = [
     path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/v1/token/verify/', TokenVerifyView.as_view(), name='verify'),
     path('api/v1/like/<int:pk>/', ArticleAPILike.as_view(), name='like_post'),
-    path('api/v1/comment/<int:pk>/', ArticleAPIComment.as_view(), name='add_comment'),
+
 ]

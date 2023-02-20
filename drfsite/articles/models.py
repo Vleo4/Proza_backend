@@ -15,7 +15,7 @@ class Article(models.Model):
     cat = models.ForeignKey('Category', on_delete=models.PROTECT, null=True)
     user = models.ForeignKey(User, verbose_name='User', on_delete=models.CASCADE)
     likes = models.ManyToManyField(User, blank=True, related_name='article_likes')
-    comments = models.ManyToManyField(User, blank=True, related_name='article_comments')
+
 
     def total_likes(self):
         return self.likes.count()
