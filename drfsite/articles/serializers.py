@@ -8,7 +8,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
     cat = serializers.StringRelatedField()
     class Meta:
-        model = Artcile
+        model = Article
         fields = "__all__"
 
 
@@ -44,5 +44,5 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class ArticlePutSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Artcile
+        model = Article
         fields = ('title', 'content', 'author', 'is_published', 'cat', 'user')

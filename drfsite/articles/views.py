@@ -15,8 +15,13 @@ from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
 
 
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+
+from django.shortcuts import get_object_or_404, redirect
 class ArticleAPIList(generics.ListAPIView):
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
@@ -27,19 +32,30 @@ class ArticleAPICreate(generics.CreateAPIView):
 
 
 class ArticleAPIUpdate(generics.RetrieveUpdateAPIView):
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (IsOwnerOrReadOnly,)
 
 
 class ArticleAPIDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (IsOwnerOrReadOnly,)
 
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+
+        likes_connected = get_object_or_404(Article, id=self.kwargs['pk'])
+        liked = False
+        if likes_connected.likes.filter(id=self.request.user.id).exists():
+            liked = True
+        data['number_of_likes'] = likes_connected.number_of_likes()
+        data['article_is_liked'] = liked
+        return data
+
 
 class ArticleAPIDestroy(generics.RetrieveDestroyAPIView):
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (IsOwnerOrReadOnly,)
 
@@ -48,14 +64,14 @@ class UserArticlesAPIView(generics.ListAPIView):
     serializer_class = ArticleSerializer
 
     def get_queryset(self):
-        return Artcile.objects.filter(user=self.kwargs['pk']).exclude(is_published=False)
+        return Article.objects.filter(user=self.kwargs['pk']).exclude(is_published=False)
 
 
 class CurrentUserArticlesAPIView(generics.ListAPIView):
     serializer_class = ArticleSerializer
 
     def get_queryset(self):
-        return Artcile.objects.filter(user=self.request.user.id)
+        return Article.objects.filter(user=self.request.user.id)
 
 
 class GetReviewsToArticleAPIView(generics.ListAPIView):
@@ -69,7 +85,7 @@ class GetArticlesFromCategory(generics.ListAPIView):
     serializer_class = ArticleSerializer
 
     def get_queryset(self):
-        return Artcile.objects.filter(cat=self.kwargs['pk']).order_by('-time_create').exclude(is_published=False)
+        return Article.objects.filter(cat=self.kwargs['pk']).order_by('-time_create').exclude(is_published=False)
 
 
 # Register API
@@ -119,4 +135,36 @@ class SearchArticles(generics.ListAPIView):
     search_fields = ['title', 'author', 'user__username', 'content']
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     serializer_class = ArticleSerializer
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
+
+class ArticleAPILike(generics.RetrieveUpdateAPIView):
+    queryset = Article.objects.all()
+    serializer_class = ArticleSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def ArticleLike(self, pk):
+        post = get_object_or_404(Article, id=self.POST.get('article_id'))
+        if post.likes.filter(id=self.user.id).exists():
+            post.likes.remove(self.user)
+        else:
+            post.likes.add(self.user)
+
+            return HttpResponseRedirect(reverse('article_detail', args=[str(pk)]))
+
+
+class ArticleAPIComment(generics.RetrieveUpdateAPIView):
+    queryset = Article.objects.all()
+    serializer_class = ArticleSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def form_valid(self, form):
+        form.instance.article_id = self.kwargs['pk']
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
+
+
+
+
