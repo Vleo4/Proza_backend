@@ -4,6 +4,6 @@ from .models import *
 
 # Register your models here.
 
-admin.site.register(Artcile)
+admin.site.register(Article)
 admin.site.register(Category)
 admin.site.register(Review)

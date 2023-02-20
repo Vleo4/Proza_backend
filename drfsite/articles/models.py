@@ -4,7 +4,7 @@ from django.db import models
 
 # Create your models here.
 
-class Artcile(models.Model):
+class Article(models.Model):
     title = models.CharField(max_length=250)
     content = models.TextField(blank=True)
     author = models.TextField(blank=True)
@@ -14,6 +14,11 @@ class Artcile(models.Model):
     count_of_reviews = models.IntegerField(default=0)
     cat = models.ForeignKey('Category', on_delete=models.PROTECT, null=True)
     user = models.ForeignKey(User, verbose_name='User', on_delete=models.CASCADE)
+    likes = models.ManyToManyField(User, blank=True, related_name='article_likes')
+
+
+    def total_likes(self):
+        return self.likes.count()
 
     def __str__(self):
         return self.title
@@ -29,7 +34,7 @@ class Artcile(models.Model):
 
 class Review(models.Model):
     user = models.ForeignKey(User, verbose_name='User', on_delete=models.CASCADE)
-    article = models.ForeignKey(Artcile, verbose_name='Article', on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, verbose_name='Article', on_delete=models.CASCADE)
     content = models.TextField(blank=True)
     time_create = models.DateTimeField(auto_now_add=True)
 

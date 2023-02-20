@@ -1,5 +1,4 @@
 from django.forms import model_to_dict
-from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework import generics, viewsets, mixins, filters
 from rest_framework.filters import SearchFilter
@@ -9,7 +8,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
-from .custom_exceptions import CensorError
 from .models import *
 from .permissions import IsOwnerOrReadOnly
 from .serializers import *
@@ -30,8 +28,13 @@ def censorship(validated_text):
     return True
 
 
+from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+
+from django.shortcuts import get_object_or_404, redirect
 class ArticleAPIList(generics.ListAPIView):
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
@@ -40,33 +43,32 @@ class ArticleAPICreate(generics.CreateAPIView):
     serializer_class = ArticlePutSerializer
     permission_classes = (IsAuthenticated,)
 
-    def post(self, request, *args, **kwargs):
-        try:
-            censorship(request.data.get("content"))
-        except CensorError:
-            response = JsonResponse({"massage": 'Too much profanity', "status_code": 0})
-            return response
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        article = serializer.save()
-        response = JsonResponse({"massage": 'Published', "status_code": 1})
-        return response
-
 
 class ArticleAPIUpdate(generics.RetrieveUpdateAPIView):
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (IsOwnerOrReadOnly,)
 
 
 class ArticleAPIDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (IsOwnerOrReadOnly,)
 
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+
+        likes_connected = get_object_or_404(Article, id=self.kwargs['pk'])
+        liked = False
+        if likes_connected.likes.filter(id=self.request.user.id).exists():
+            liked = True
+        data['number_of_likes'] = likes_connected.number_of_likes()
+        data['article_is_liked'] = liked
+        return data
+
 
 class ArticleAPIDestroy(generics.RetrieveDestroyAPIView):
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (IsOwnerOrReadOnly,)
 
@@ -75,14 +77,14 @@ class UserArticlesAPIView(generics.ListAPIView):
     serializer_class = ArticleSerializer
 
     def get_queryset(self):
-        return Artcile.objects.filter(user=self.kwargs['pk']).exclude(is_published=False)
+        return Article.objects.filter(user=self.kwargs['pk']).exclude(is_published=False)
 
 
 class CurrentUserArticlesAPIView(generics.ListAPIView):
     serializer_class = ArticleSerializer
 
     def get_queryset(self):
-        return Artcile.objects.filter(user=self.request.user.id)
+        return Article.objects.filter(user=self.request.user.id)
 
 
 class GetReviewsToArticleAPIView(generics.ListAPIView):
@@ -96,7 +98,7 @@ class GetArticlesFromCategory(generics.ListAPIView):
     serializer_class = ArticleSerializer
 
     def get_queryset(self):
-        return Artcile.objects.filter(cat=self.kwargs['pk']).order_by('-time_create').exclude(is_published=False)
+        return Article.objects.filter(cat=self.kwargs['pk']).order_by('-time_create').exclude(is_published=False)
 
 
 # Register API
@@ -146,4 +148,26 @@ class SearchArticles(generics.ListAPIView):
     search_fields = ['title', 'author', 'user__username', 'content']
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     serializer_class = ArticleSerializer
-    queryset = Artcile.objects.all()
+    queryset = Article.objects.all()
+
+class ArticleAPILike(generics.RetrieveUpdateAPIView):
+    queryset = Article.objects.all()
+    serializer_class = ArticleSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+
+    def ArticleLike(self, pk):
+        post = get_object_or_404(Article, id=self.POST.get('article_id'))
+        if post.likes.filter(id=self.user.id).exists():
+            post.likes.remove(self.user)
+        else:
+            post.likes.add(self.user)
+
+            return HttpResponseRedirect(reverse('article_detail', args=[str(pk)]))
+
+
+
+
+
+
+
+
