@@ -1,0 +1,2 @@
+class CensorError(ValueError):
+    pass

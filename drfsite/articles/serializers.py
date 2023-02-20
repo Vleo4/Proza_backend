@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 class ArticleSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
     cat = serializers.StringRelatedField()
+
     class Meta:
         model = Article
         fields = "__all__"
@@ -19,6 +20,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+
+    class Meta:
+        model = Review
+        fields = "__all__"
+
+
+class ReviewPutSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = "__all__"

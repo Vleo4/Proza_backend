@@ -1,4 +1,5 @@
 from django.forms import model_to_dict
+from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework import generics, viewsets, mixins, filters
 from rest_framework.filters import SearchFilter
@@ -8,18 +9,31 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
+from .custom_exceptions import CensorError
 from .models import *
 from .permissions import IsOwnerOrReadOnly
 from .serializers import *
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
 
-
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 from django.shortcuts import get_object_or_404, redirect
+
+
+def censorship(validated_text):
+    text = validated_text.lower().replace('.,#?!', ' ').split()
+    roman_names_list = ['хуй', 'вагіна']
+    swearword_count = 0
+    word_count = len(text)
+    for word in text:
+        if word in roman_names_list:
+            raise CensorError()
+    return True
+
+
 class ArticleAPIList(generics.ListAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
@@ -102,9 +116,14 @@ class RegisterAPI(generics.GenericAPIView):
 
 
 class ReviewAPICreate(generics.CreateAPIView):
-    serializer_class = ReviewSerializer
+    serializer_class = ReviewPutSerializer
 
     def post(self, request):
+        try:
+            censorship(request.data.get("content"))
+        except CensorError:
+            response = JsonResponse({"massage": 'Too much profanity', "status_code": 0})
+            return response
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.validated_data['article'].addCountReviews()
@@ -137,6 +156,7 @@ class SearchArticles(generics.ListAPIView):
     serializer_class = ArticleSerializer
     queryset = Article.objects.all()
 
+
 class ArticleAPILike(generics.RetrieveUpdateAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
@@ -150,11 +170,3 @@ class ArticleAPILike(generics.RetrieveUpdateAPIView):
             post.likes.add(self.user)
 
             return HttpResponseRedirect(reverse('article_detail', args=[str(pk)]))
-
-
-
-
-
-
-
-
