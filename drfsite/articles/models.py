@@ -7,7 +7,7 @@ from django.db import models
 
 class Article(models.Model):
     title = models.CharField(max_length=250)
-    content = models.TextField(blank=True)
+    content = models.TextField()
     author = models.TextField(blank=True)
     time_create = models.DateTimeField(auto_now_add=True)
     is_published = models.BooleanField(default=True)
@@ -36,7 +36,7 @@ class Article(models.Model):
 class Review(models.Model):
     user = models.ForeignKey(User, verbose_name='User', on_delete=models.CASCADE)
     article = models.ForeignKey(Article, verbose_name='Article', on_delete=models.CASCADE)
-    content = models.TextField(blank=True)
+    content = models.TextField()
     time_create = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -51,3 +51,11 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProzaUser(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    nickname = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
+    saved = models.ManyToManyField('Article')
+

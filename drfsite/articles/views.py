@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .custom_exceptions import CensorError
 from .models import *
@@ -78,7 +79,7 @@ class UserArticlesAPIView(generics.ListAPIView):
     serializer_class = ArticleSerializer
 
     def get_queryset(self):
-        return Article.objects.filter(user=self.kwargs['pk']).exclude(is_published=False)
+        return Article.objects.filter(user__username=self.kwargs['slug'], is_published=True)#.exclude(is_published=False)
 
 
 class CurrentUserArticlesAPIView(generics.ListAPIView):
@@ -110,8 +111,15 @@ class RegisterAPI(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        #Generating jwt token
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+
         return Response({
-            "user": UserSerializer(user, context=self.get_serializer_context()).data
+            "user": UserSerializer(user, context=self.get_serializer_context()).data,
+            "access": access_token,
+            "refresh": str(refresh),
         })
 
 
@@ -170,3 +178,41 @@ class ArticleAPILike(generics.RetrieveUpdateAPIView):
             post.likes.add(self.user)
 
             return HttpResponseRedirect(reverse('article_detail', args=[str(pk)]))
+
+
+class SaveArticleAPI(generics.UpdateAPIView):
+    serializer_class = ProzaUserSerializer
+
+    def update(self, request, *args, **kwargs):
+        user = self.request.user
+        article_id = kwargs['pk']  # assuming the article ID is passed in as a URL parameter
+        proza_user, created = ProzaUser.objects.get_or_create(user=user)
+        proza_user.saved.add(article_id)
+        serializer = ProzaUserSerializer(proza_user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class SavedArticlesAPI(generics.ListAPIView):
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        user = self.request.user.prozauser
+        return user.saved.all()
+
+
+class ProzaUserCurrentProfileAPI(generics.RetrieveAPIView):
+    serializer_class = ProzaUserProfileSerializer
+    queryset = ProzaUser.objects.all()
+
+    def get_object(self):
+        return self.request.user.prozauser
+
+
+class ProzaUserProfileAPI(generics.RetrieveAPIView):
+    serializer_class = ProzaUserProfileSerializer
+
+    def get_object(self):
+        return ProzaUser.objects.get(user__username=self.kwargs['slug'])
+
