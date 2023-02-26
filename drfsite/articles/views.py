@@ -16,23 +16,13 @@ from .permissions import IsOwnerOrReadOnly
 from .serializers import *
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
-
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-
 from django.shortcuts import get_object_or_404, redirect
 
-
-def censorship(validated_text):
-    text = validated_text.lower().replace('.,#?!', ' ').split()
-    roman_names_list = ['хуй', 'вагіна']
-    swearword_count = 0
-    word_count = len(text)
-    for word in text:
-        if word in roman_names_list:
-            raise CensorError()
-    return True
+# Custom anti-plagiarism & censorship
+from .checking_new_data import censorship, anti_plagiarism
 
 
 class ArticleAPIList(generics.ListAPIView):
@@ -44,12 +34,51 @@ class ArticleAPIList(generics.ListAPIView):
 class ArticleAPICreate(generics.CreateAPIView):
     serializer_class = ArticlePutSerializer
     permission_classes = (IsAuthenticated,)
+    queryset = Article.objects.all()
+
+    def get_content_from_all_Articles(self):
+        all_content = [article.content for article in self.queryset.all()]
+        return all_content
+
+    def post(self, request):
+        all_poems = self.get_content_from_all_Articles()
+        new_poem = request.data.get("content")
+        plagiarism = anti_plagiarism(new_poem, all_poems)
+        if plagiarism != 0:
+            response = JsonResponse({"massage": 'Plagiarism',
+                                     "plagiarism_source": self.queryset[plagiarism - 1].pk,
+                                     "status_code": 0})
+            return response
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"article": serializer.data, "status_code": 1})
 
 
 class ArticleAPIUpdate(generics.RetrieveUpdateAPIView):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (IsOwnerOrReadOnly,)
+
+    def get_content_from_all_Articles(self):
+        all_content = [article.content for article in self.queryset.all()]
+        return all_content
+
+    def update(self, request):
+        all_poems = self.get_content_from_all_Articles()
+        new_poem = request.data.get("content")
+        plagiarism = anti_plagiarism(new_poem, all_poems)
+        if plagiarism != 0:
+            response = JsonResponse({"massage": 'Plagiarism',
+                                     "plagiarism_source": self.queryset[plagiarism - 1].pk,
+                                     "status_code": 0})
+            return response
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"article": serializer.data, "status_code": 1})
 
 
 class ArticleAPIDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -79,7 +108,8 @@ class UserArticlesAPIView(generics.ListAPIView):
     serializer_class = ArticleSerializer
 
     def get_queryset(self):
-        return Article.objects.filter(user__username=self.kwargs['slug'], is_published=True)#.exclude(is_published=False)
+        return Article.objects.filter(user__username=self.kwargs['slug'],
+                                      is_published=True)  # .exclude(is_published=False)
 
 
 class CurrentUserArticlesAPIView(generics.ListAPIView):
@@ -112,7 +142,7 @@ class RegisterAPI(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        #Generating jwt token
+        # Generating jwt token
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
 
@@ -215,4 +245,3 @@ class ProzaUserProfileAPI(generics.RetrieveAPIView):
 
     def get_object(self):
         return ProzaUser.objects.get(user__username=self.kwargs['slug'])
-
