@@ -4,6 +4,10 @@ from .models import *
 from django.contrib.auth.models import User
 
 
+
+
+
+
 class ArticleSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(
         slug_field='username',
@@ -73,6 +77,12 @@ class ArticlePutSerializer(serializers.ModelSerializer):
         fields = ('title', 'content', 'author', 'is_published', 'cat', 'user')
 
 
+class ArticleLikeSerializer(serializers.ModelSerializer):
+    likes = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all(), many=True)
+    class Meta:
+        model = Article
+        fields = ('likes',)
+
 class ProzaUserSaveSerializer(serializers.ModelSerializer):
     saved = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all(), many=True)
 
@@ -90,8 +100,27 @@ class ProzaUserSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UserAchievementSerializer(serializers.ModelSerializer):
+    user = UserSerializer
+
+    class Meta:
+        model = ProzaUser
+        fields = "__all__"
 class ProzaUserProfileSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
     class Meta:
         model = ProzaUser
         fields = ('user', 'nickname', 'description')
+
+
+class ReportArticleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReportArticle
+        fields = "__all__"
+
+
+
+
+
+
+

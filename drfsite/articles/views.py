@@ -1,7 +1,7 @@
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import render
-from rest_framework import generics, viewsets, mixins, filters
+from rest_framework import generics, viewsets, mixins, filters, status
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser
@@ -22,6 +22,8 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 from django.shortcuts import get_object_or_404, redirect
+
+from django.shortcuts import render
 
 
 def censorship(validated_text):
@@ -79,7 +81,8 @@ class UserArticlesAPIView(generics.ListAPIView):
     serializer_class = ArticleSerializer
 
     def get_queryset(self):
-        return Article.objects.filter(user__username=self.kwargs['slug'], is_published=True)#.exclude(is_published=False)
+        return Article.objects.filter(user__username=self.kwargs['slug'],
+                                      is_published=True)  # .exclude(is_published=False)
 
 
 class CurrentUserArticlesAPIView(generics.ListAPIView):
@@ -112,7 +115,7 @@ class RegisterAPI(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        #Generating jwt token
+        # Generating jwt token
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
 
@@ -165,20 +168,17 @@ class SearchArticles(generics.ListAPIView):
     queryset = Article.objects.all()
 
 
-class ArticleAPILike(generics.RetrieveUpdateAPIView):
+class ArticleAPILike(generics.UpdateAPIView):
+    serializer_class = ArticleLikeSerializer
     queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
 
-    def ArticleLike(self, pk):
-        post = get_object_or_404(Article, id=self.POST.get('article_id'))
-        if post.likes.filter(id=self.user.id).exists():
-            post.likes.remove(self.user)
-        else:
-            post.likes.add(self.user)
-
-            return HttpResponseRedirect(reverse('article_detail', args=[str(pk)]))
-
+    def update(self, request, *args, **kwargs):
+        user = self.request.user
+        article_id = kwargs['pk']
+        article_like, created = Article.objects.get_or_create(id=article_id)
+        article_like.likes.add(user)
+        serializer = ArticleLikeSerializer(article_like, data=request.data)
+        return Response({'please move along': 'nothing to see here'}, status.HTTP_200_OK)
 
 class SaveArticleAPI(generics.UpdateAPIView):
     serializer_class = ProzaUserSerializer
@@ -189,9 +189,7 @@ class SaveArticleAPI(generics.UpdateAPIView):
         proza_user, created = ProzaUser.objects.get_or_create(user=user)
         proza_user.saved.add(article_id)
         serializer = ProzaUserSerializer(proza_user, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        return Response({'please move along': 'nothing to see here'}, status.HTTP_200_OK)
 
 
 class SavedArticlesAPI(generics.ListAPIView):
@@ -215,4 +213,39 @@ class ProzaUserProfileAPI(generics.RetrieveAPIView):
 
     def get_object(self):
         return ProzaUser.objects.get(user__username=self.kwargs['slug'])
+
+
+class TopListAPI(generics.ListAPIView):
+    serializer_class = ArticleSerializer
+    queryset = Article.objects.filter(is_published=True).order_by('-likes')
+
+
+class ReportArticleAPI(generics.CreateAPIView):
+    serializer_class = ReportArticleSerializer
+    queryset = ReportArticle.objects.all()
+
+    def report_article(self):
+        article_id = ReportArticleSerializer.validated_data['article_id']
+        reason = ReportArticleSerializer.validated_data['reason']
+        article = Article.objects.get(id=article_id)
+        report = ReportArticle(article=article, reason=reason)
+        report.save()
+
+
+class UserAchievementsAPI(generics.ListAPIView):
+    serializer_class = UserAchievementSerializer
+    queryset = UserAchievement.objects.all()
+
+    def user_achievements(self):
+        serializer = UserAchievementSerializer.objects.filter(user=self.kwargs['pk'])
+
+
+class CategoryListAPI(generics.ListAPIView):
+    serializer_class = CategorySerizlizer
+    queryset = Category.objects.all()
+
+class ArticleFromCategoryAPI(generics.ListAPIView):
+    serializer_class = ArticleSerializer
+    def get_queryset(self):
+        return Article.objects.filter(cat=self.kwargs['pk']).exclude(is_published=False)
 
