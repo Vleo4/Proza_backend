@@ -30,5 +30,11 @@ urlpatterns = [
     path('api/v1/savedarticles/', SavedArticlesAPI.as_view()),
     path('api/v1/prozauserprofile/', ProzaUserCurrentProfileAPI.as_view()),
     path('api/v1/prozauserprofile/<slug:slug>/', ProzaUserProfileAPI.as_view()),
+    path('api/v1/topaticles/', TopListAPI.as_view(), name='top-articles'),
+    path('api/v1/achievement/<int:pk>/', UserAchievementsAPI.as_view(), name='user-achievements'),
+    path('api/v1/report/', ReportArticleAPI.as_view(), name='article-report'),
+    path('api/v1/categorylist/', CategoryListAPI.as_view(), name='category-list'),
+    path('api/v1/articlefromcategory/<int:pk>/', ArticleFromCategoryAPI.as_view()),
     # re_path(r".*", TemplateView.as_view(template_name='index.html')),
+
 ]

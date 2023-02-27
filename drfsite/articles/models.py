@@ -59,3 +59,24 @@ class ProzaUser(models.Model):
     description = models.TextField(blank=True)
     saved = models.ManyToManyField('Article')
 
+
+class ReportArticle(models.Model):
+    name = models.CharField(max_length=50)
+    user = models.ForeignKey(User, verbose_name='User', on_delete=models.CASCADE)
+    content = models.TextField()
+    article = models.ForeignKey(Article, verbose_name='Article', on_delete=models.CASCADE)
+
+
+
+
+class UserAchievement(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    requirement = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date_earned = models.DateTimeField(auto_now_add=True)
+    ico = models.CharField(max_length=500, blank=True)
+
+    def __str__(self):
+        return self.name
+
