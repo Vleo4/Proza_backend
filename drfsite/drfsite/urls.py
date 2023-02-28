@@ -30,6 +30,7 @@ urlpatterns = [
     path('api/v1/savedarticles/', SavedArticlesAPI.as_view()),
     path('api/v1/prozauserprofile/', ProzaUserCurrentProfileAPI.as_view()),
     path('api/v1/prozauserprofile/<slug:slug>/', ProzaUserProfileAPI.as_view()),
+    path('api/v1/subscription/<slug:nickname>/', SubscriptionAPI.as_view()),
     path('api/v1/topaticles/', TopListAPI.as_view(), name='top-articles'),
     path('api/v1/achievement/<int:pk>/', UserAchievementsAPI.as_view(), name='user-achievements'),
     path('api/v1/report/', ReportArticleAPI.as_view(), name='article-report'),

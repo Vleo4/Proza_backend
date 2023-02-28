@@ -108,8 +108,17 @@ class UserAchievementSerializer(serializers.ModelSerializer):
         fields = "__all__"
 class ProzaUserProfileSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
+
     class Meta:
         model = ProzaUser
+        fields = "__all__"
+
+
+class ProzaUserSubscriptionSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+    class Meta:
+        model = ProzaUser
+        fields = ('follows', 'subscribers', 'user')
         fields = ('user', 'nickname', 'description')
 
 
@@ -117,10 +126,5 @@ class ReportArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReportArticle
         fields = "__all__"
-
-
-
-
-
 
 
