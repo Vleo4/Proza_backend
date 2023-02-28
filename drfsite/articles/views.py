@@ -166,7 +166,7 @@ class ReviewAPICreate(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.validated_data['article'].addCountReviews()
         serializer.save()
-        return Response({'review': serializer.data})
+        return Response({'review': serializer.data, "status_code": 1})
 
 
 class ReviewAPIList(generics.ListAPIView):
@@ -245,3 +245,21 @@ class ProzaUserProfileAPI(generics.RetrieveAPIView):
 
     def get_object(self):
         return ProzaUser.objects.get(user__username=self.kwargs['slug'])
+
+
+class SubscriptionAPI(generics.RetrieveUpdateAPIView):
+    serializer_class = ProzaUserSubscriptionSerializer
+    queryset = ProzaUser.objects.all()
+    lookup_field = 'nickname'
+
+    def update(self, request, *args, **kwargs):
+        subscriber = ProzaUser.objects.get(user__pk=self.request.user.pk)
+        user = ProzaUser.objects.get(nickname=kwargs['nickname'])
+        if user.subscribers.filter(id=subscriber.id).exists():
+            user.subscribers.remove(subscriber)
+            subscriber.follows.remove(user)
+            return Response({'massage': 'subscribe canceled'})
+        else:
+            user.subscribers.add(subscriber)
+            subscriber.follows.add(user)
+            return Response({'massage': 'subscribe success'})

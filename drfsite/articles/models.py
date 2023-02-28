@@ -17,7 +17,6 @@ class Article(models.Model):
     user = models.ForeignKey(User, verbose_name='User', on_delete=models.CASCADE)
     likes = models.ManyToManyField(User, blank=True, related_name='article_likes')
 
-
     def total_likes(self):
         return self.likes.count()
 
@@ -58,4 +57,5 @@ class ProzaUser(models.Model):
     nickname = models.CharField(max_length=100, blank=True)
     description = models.TextField(blank=True)
     saved = models.ManyToManyField('Article')
-
+    follows = models.ManyToManyField('ProzaUser', related_name='ProzaUser_follows')
+    subscribers = models.ManyToManyField('ProzaUser', related_name='ProzaUser_subscribers')

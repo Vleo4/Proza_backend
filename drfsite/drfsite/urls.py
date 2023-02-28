@@ -30,5 +30,6 @@ urlpatterns = [
     path('api/v1/savedarticles/', SavedArticlesAPI.as_view()),
     path('api/v1/prozauserprofile/', ProzaUserCurrentProfileAPI.as_view()),
     path('api/v1/prozauserprofile/<slug:slug>/', ProzaUserProfileAPI.as_view()),
+    path('api/v1/subscription/<slug:nickname>/', SubscriptionAPI.as_view()),
     # re_path(r".*", TemplateView.as_view(template_name='index.html')),
 ]
