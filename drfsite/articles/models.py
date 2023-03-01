@@ -59,6 +59,7 @@ class ProzaUser(models.Model):
     saved = models.ManyToManyField('Article')
     follows = models.ManyToManyField('ProzaUser', related_name='ProzaUser_follows')
     subscribers = models.ManyToManyField('ProzaUser', related_name='ProzaUser_subscribers')
+    fav_category = models.ManyToManyField('Category')
 
 
 class ReportArticle(models.Model):
@@ -66,8 +67,6 @@ class ReportArticle(models.Model):
     user = models.ForeignKey(User, verbose_name='User', on_delete=models.CASCADE)
     content = models.TextField()
     article = models.ForeignKey(Article, verbose_name='Article', on_delete=models.CASCADE)
-
-
 
 
 class UserAchievement(models.Model):
