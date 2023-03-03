@@ -4,10 +4,6 @@ from .models import *
 from django.contrib.auth.models import User
 
 
-
-
-
-
 class ArticleSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(
         slug_field='username',
@@ -51,12 +47,12 @@ class CategorySerizlizer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    nickname = serializers.CharField(max_length=100)
-    description = serializers.CharField(allow_blank=True)
+    #nickname = serializers.CharField(max_length=100)
+    #description = serializers.CharField(allow_blank=True)
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'nickname', 'description')
+        fields = ('id', 'username', 'email', 'password') #, 'nickname', 'description')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -64,8 +60,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         proza_user = ProzaUser.objects.create(
             user=user,
-            nickname=validated_data['nickname'],
-            description=validated_data['description'],
+            #nickname=validated_data['nickname'],
+            #description=validated_data['description'],
         )
 
         return user

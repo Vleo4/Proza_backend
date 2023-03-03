@@ -11,6 +11,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .custom_exceptions import CensorError
+from .checking_new_data import censorship, anti_plagiarism
 from .models import *
 from .permissions import IsOwnerOrReadOnly
 from .serializers import *
@@ -34,12 +35,11 @@ def censorship(validated_text):
             raise CensorError()
     return True
 
-# Custom anti-plagiarism & censorship
-from .checking_new_data import censorship, anti_plagiarism
 
+# Custom anti-plagiarism & censorship
 
 class ArticleAPIList(generics.ListAPIView):
-    queryset = Article.objects.all()
+    queryset = Article.objects.filter(is_published=True)
     serializer_class = ArticleSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
@@ -220,16 +220,20 @@ class ArticleAPILike(generics.UpdateAPIView):
         serializer = ArticleLikeSerializer(article_like, data=request.data)
         return Response({'please move along': 'nothing to see here'}, status.HTTP_200_OK)
 
+
 class SaveArticleAPI(generics.UpdateAPIView):
     serializer_class = ProzaUserSerializer
 
     def update(self, request, *args, **kwargs):
         user = self.request.user
-        article_id = kwargs['pk']  # assuming the article ID is passed in as a URL parameter
-        proza_user, created = ProzaUser.objects.get_or_create(user=user)
-        proza_user.saved.add(article_id)
-        serializer = ProzaUserSerializer(proza_user, data=request.data)
-        return Response({'please move along': 'nothing to see here'}, status.HTTP_200_OK)
+        proza_user = ProzaUser.objects.get(user=user)
+        article_x = kwargs['pk']  # assuming the article ID is passed in as a URL parameter
+        if proza_user.saved.filter(id=article_x).exists():
+            proza_user.saved.remove(article_x)
+            return Response({'massage': 'unsaved'}, status.HTTP_200_OK)
+        else:
+            proza_user.saved.add(article_x)
+            return Response({'massage': 'saved'}, status.HTTP_200_OK)
 
 
 class SavedArticlesAPI(generics.ListAPIView):
@@ -254,6 +258,7 @@ class ProzaUserProfileAPI(generics.RetrieveAPIView):
     def get_object(self):
         return ProzaUser.objects.get(user__username=self.kwargs['slug'])
 
+
 class SubscriptionAPI(generics.RetrieveUpdateAPIView):
     serializer_class = ProzaUserSubscriptionSerializer
     queryset = ProzaUser.objects.all()
@@ -270,6 +275,7 @@ class SubscriptionAPI(generics.RetrieveUpdateAPIView):
             user.subscribers.add(subscriber)
             subscriber.follows.add(user)
             return Response({'massage': 'subscribe success'})
+
 
 class TopListAPI(generics.ListAPIView):
     serializer_class = ArticleSerializer
@@ -300,8 +306,18 @@ class CategoryListAPI(generics.ListAPIView):
     serializer_class = CategorySerizlizer
     queryset = Category.objects.all()
 
+
 class ArticleFromCategoryAPI(generics.ListAPIView):
     serializer_class = ArticleSerializer
-    def get_queryset(self):
-        return Article.objects.filter(cat=self.kwargs['pk']).exclude(is_published=False)
 
+    def get_queryset(self):
+        return Article.objects.filter(cat=self.kwargs['pk'], is_published=True)
+
+
+class RecommendationAPI(generics.ListAPIView):
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        proza_user = ProzaUser.objects.get(user=self.request.user)
+        fav_category = proza_user.fav_category.all()
+        return Article.objects.filter(cat__in=fav_category)
