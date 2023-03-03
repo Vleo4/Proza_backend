@@ -114,8 +114,7 @@ class ProzaUserSubscriptionSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
     class Meta:
         model = ProzaUser
-        fields = ('follows', 'subscribers', 'user')
-        fields = ('user', 'nickname', 'description')
+        fields = "__all__"
 
 
 class ReportArticleSerializer(serializers.ModelSerializer):

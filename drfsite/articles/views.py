@@ -245,20 +245,18 @@ class ProzaUserProfileAPI(generics.RetrieveAPIView):
         return ProzaUser.objects.get(user__username=self.kwargs['slug'])
 
 
-class SubscriptionAPI(generics.RetrieveUpdateAPIView):
+class SubscriptionAPI(generics.UpdateAPIView):
     serializer_class = ProzaUserSubscriptionSerializer
-    queryset = ProzaUser.objects.all()
-    lookup_field = 'user__username'
     def update(self, request, *args, **kwargs):
-        subscriber = ProzaUser.objects.get(user=self.request.user)
-        user = ProzaUser.objects.get(user__username=self.kwargs['slug'])
-        if user.subscribers.filter(id=subscriber.id).exists():
-            user.subscribers.remove(subscriber)
-            subscriber.follows.remove(user)
+        subscriber = ProzaUser.objects.get(user=request.user)
+        proza_user = ProzaUser.objects.get(user__username=kwargs['slug'])
+        if proza_user.subscribers.filter(id=subscriber.id).exists():
+            proza_user.subscribers.remove(subscriber)
+            subscriber.follows.remove(proza_user)
             return Response({'massage': 'subscribe canceled'})
         else:
-            user.subscribers.add(subscriber)
-            subscriber.follows.add(user)
+            proza_user.subscribers.add(subscriber)
+            subscriber.follows.add(proza_user)
             return Response({'massage': 'subscribe success'})
 
 
