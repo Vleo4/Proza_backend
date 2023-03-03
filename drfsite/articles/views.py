@@ -11,7 +11,6 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .custom_exceptions import CensorError
-from .checking_new_data import censorship, anti_plagiarism
 from .models import *
 from .permissions import IsOwnerOrReadOnly
 from .serializers import *
@@ -23,21 +22,8 @@ from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect
 
 from django.shortcuts import render
-
-
-def censorship(validated_text):
-    text = validated_text.lower().replace('.,#?!', ' ').split()
-    roman_names_list = ['хуй', 'вагіна']
-    swearword_count = 0
-    word_count = len(text)
-    for word in text:
-        if word in roman_names_list:
-            raise CensorError()
-    return True
-
-
 # Custom anti-plagiarism & censorship
-
+from .checking_new_data import censorship, anti_plagiarism
 class ArticleAPIList(generics.ListAPIView):
     queryset = Article.objects.filter(is_published=True)
     serializer_class = ArticleSerializer
@@ -54,9 +40,9 @@ class ArticleAPICreate(generics.CreateAPIView):
         return all_content
 
     def post(self, request):
-        all_poems = self.get_content_from_all_Articles()
+        all_content = [article.content for article in self.queryset.all()]
         new_poem = request.data.get("content")
-        plagiarism = anti_plagiarism(new_poem, all_poems)
+        plagiarism = anti_plagiarism(new_poem, all_content)
         if plagiarism != 0:
             response = JsonResponse({"massage": 'Plagiarism',
                                      "plagiarism_source": self.queryset[plagiarism - 1].pk,
@@ -79,9 +65,9 @@ class ArticleAPIUpdate(generics.RetrieveUpdateAPIView):
         return all_content
 
     def update(self, request):
-        all_poems = self.get_content_from_all_Articles()
+        all_content = [article.content for article in self.queryset.all()]
         new_poem = request.data.get("content")
-        plagiarism = anti_plagiarism(new_poem, all_poems)
+        plagiarism = anti_plagiarism(new_poem, all_content)
         if plagiarism != 0:
             response = JsonResponse({"massage": 'Plagiarism',
                                      "plagiarism_source": self.queryset[plagiarism - 1].pk,
@@ -262,11 +248,10 @@ class ProzaUserProfileAPI(generics.RetrieveAPIView):
 class SubscriptionAPI(generics.RetrieveUpdateAPIView):
     serializer_class = ProzaUserSubscriptionSerializer
     queryset = ProzaUser.objects.all()
-    lookup_field = 'nickname'
-
+    lookup_field = 'user__username'
     def update(self, request, *args, **kwargs):
-        subscriber = ProzaUser.objects.get(user__pk=self.request.user.pk)
-        user = ProzaUser.objects.get(nickname=kwargs['nickname'])
+        subscriber = ProzaUser.objects.get(user=self.request.user)
+        user = ProzaUser.objects.get(user__username=self.kwargs['slug'])
         if user.subscribers.filter(id=subscriber.id).exists():
             user.subscribers.remove(subscriber)
             subscriber.follows.remove(user)

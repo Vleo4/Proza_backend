@@ -1,7 +1,30 @@
 from articles.custom_exceptions import CensorError
 import re
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+
+
+def levenshtein_distance(s, t):
+    m, n = len(s), len(t)
+    d = [[0] * (n + 1) for i in range(m + 1)]
+
+    for i in range(m + 1):
+        d[i][0] = i
+    for j in range(n + 1):
+        d[0][j] = j
+
+    for j in range(1, n + 1):
+        for i in range(1, m + 1):
+            if s[i - 1] == t[j - 1]:
+                d[i][j] = d[i - 1][j - 1]
+            else:
+                d[i][j] = min(d[i - 1][j], d[i][j - 1], d[i - 1][j - 1]) + 1
+
+    return d[m][n]
+
+
+def check_similarity(text1, text2):
+    distance = levenshtein_distance(text1, text2)
+    similarity = 1 - distance / max(len(text1), len(text2))
+    return similarity
 
 
 def preprocess_text(text, stop_words):
@@ -15,12 +38,7 @@ def anti_plagiarism(new_poem, database):
     new_poem = preprocess_text(new_poem, ukrainian_stop_words)
     database = [preprocess_text(poem, ukrainian_stop_words) for poem in database]
 
-    vectorizer = TfidfVectorizer()
-
-    database_vectors = vectorizer.fit_transform(database)
-    new_poem_vector = vectorizer.transform([new_poem])
-
-    similarities = cosine_similarity(new_poem_vector, database_vectors)[0]
+    similarities = [check_similarity(new_poem, old_poem) for old_poem in database]
     i = 0
     for similariti in similarities:
         i += 1
