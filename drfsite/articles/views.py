@@ -22,10 +22,8 @@ from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect
 
 from django.shortcuts import render
-
-
 # Custom anti-plagiarism & censorship
-from checking_new_data import censorship, anti_plagiarism
+from .checking_new_data import censorship, anti_plagiarism
 class ArticleAPIList(generics.ListAPIView):
     queryset = Article.objects.filter(is_published=True)
     serializer_class = ArticleSerializer
@@ -250,11 +248,10 @@ class ProzaUserProfileAPI(generics.RetrieveAPIView):
 class SubscriptionAPI(generics.RetrieveUpdateAPIView):
     serializer_class = ProzaUserSubscriptionSerializer
     queryset = ProzaUser.objects.all()
-    lookup_field = 'nickname'
-
+    lookup_field = 'user__username'
     def update(self, request, *args, **kwargs):
-        subscriber = ProzaUser.objects.get(user__pk=self.request.user.pk)
-        user = ProzaUser.objects.get(nickname=kwargs['nickname'])
+        subscriber = ProzaUser.objects.get(user=self.request.user)
+        user = ProzaUser.objects.get(user__username=self.kwargs['slug'])
         if user.subscribers.filter(id=subscriber.id).exists():
             user.subscribers.remove(subscriber)
             subscriber.follows.remove(user)
