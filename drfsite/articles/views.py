@@ -199,12 +199,20 @@ class ArticleAPILike(generics.UpdateAPIView):
     queryset = Article.objects.all()
 
     def update(self, request, *args, **kwargs):
-        user = self.request.user
-        article_id = kwargs['pk']
-        article_like, created = Article.objects.get_or_create(id=article_id)
-        article_like.likes.add(user)
-        serializer = ArticleLikeSerializer(article_like, data=request.data)
-        return Response({'please move along': 'nothing to see here'}, status.HTTP_200_OK)
+        user = self.request.user.id
+        article_like = Article.objects.get(id=kwargs['pk'])
+        if article_like.likes.filter(id=user).exists():
+            article_like.likes.remove(user)
+            tmp = article_like.count_of_likes - 1
+            article_like.count_of_likes = tmp
+            return Response({'message': 'unliked'}, status.HTTP_200_OK)
+        else:
+            article_like.likes.add(user)
+            tmp = article_like.count_of_likes + 1
+            article_like.count_of_likes = tmp
+            return Response({'message': 'liked'}, status.HTTP_200_OK)
+
+
 
 
 class SaveArticleAPI(generics.UpdateAPIView):
@@ -228,6 +236,15 @@ class SavedArticlesAPI(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user.prozauser
         return user.saved.all()
+
+
+class ProzaUserAchievementAPI(generics.ListAPIView):
+    serializer_class = ProzaUserAchievementSerializer
+    queryset = ProzaUser.objects.all()
+
+    def get_queryset(self):
+        user = self.request.user.prozauser
+        return user.achieved.all()
 
 
 class ProzaUserCurrentProfileAPI(generics.RetrieveAPIView):
@@ -267,6 +284,7 @@ class TopListAPI(generics.ListAPIView):
     queryset = Article.objects.filter(is_published=True).order_by('-likes')
 
 
+
 class ReportArticleAPI(generics.CreateAPIView):
     serializer_class = ReportArticleSerializer
     queryset = ReportArticle.objects.all()
@@ -278,13 +296,6 @@ class ReportArticleAPI(generics.CreateAPIView):
         report = ReportArticle(article=article, reason=reason)
         report.save()
 
-
-class UserAchievementsAPI(generics.ListAPIView):
-    serializer_class = UserAchievementSerializer
-    queryset = UserAchievement.objects.all()
-
-    def user_achievements(self):
-        serializer = UserAchievementSerializer.objects.filter(user=self.kwargs['pk'])
 
 
 class CategoryListAPI(generics.ListAPIView):
