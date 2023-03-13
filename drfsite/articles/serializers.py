@@ -73,6 +73,12 @@ class ArticlePutSerializer(serializers.ModelSerializer):
         fields = ('title', 'content', 'author', 'is_published', 'cat', 'user')
 
 
+class ArticleUpdateDodikSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Article
+        fields = ('title', 'content', 'author', 'is_published', 'cat')
+
+
 class ArticleLikeSerializer(serializers.ModelSerializer):
     likes = serializers.PrimaryKeyRelatedField(queryset=Article.objects.all(), many=True)
     class Meta:
@@ -95,6 +101,11 @@ class ProzaUserSerializer(serializers.ModelSerializer):
         model = ProzaUser
         fields = "__all__"
 
+
+class ProzaUserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProzaUser
+        fields = ('nickname', 'description')
 
 class UserAchievementSerializer(serializers.ModelSerializer):
     user = UserSerializer
