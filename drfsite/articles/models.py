@@ -60,22 +60,27 @@ class ProzaUser(models.Model):
     follows = models.ManyToManyField('ProzaUser', related_name='ProzaUser_follows')
     subscribers = models.ManyToManyField('ProzaUser', related_name='ProzaUser_subscribers')
     fav_category = models.ManyToManyField('Category')
-
+    achieved = models.ManyToManyField('Achievement')
 
 class ReportArticle(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, db_index=True)
     user = models.ForeignKey(User, verbose_name='User', on_delete=models.CASCADE)
     content = models.TextField()
     article = models.ForeignKey(Article, verbose_name='Article', on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.name
 
-class UserAchievement(models.Model):
-    name = models.CharField(max_length=255)
+
+
+class Achievement(models.Model):
+    name = models.CharField(max_length=255, db_index=True)
     description = models.TextField()
     requirement = models.TextField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date_earned = models.DateTimeField(auto_now_add=True)
-    ico = models.CharField(max_length=500, blank=True)
+    ico = models.TextField()
 
     def __str__(self):
         return self.name
+
+
+

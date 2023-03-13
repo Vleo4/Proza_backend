@@ -9,4 +9,5 @@ admin.site.register(Category)
 admin.site.register(Review)
 admin.site.register(ProzaUser)
 admin.site.register(ReportArticle)
-admin.site.register(UserAchievement)
+admin.site.register(Achievement)
+
