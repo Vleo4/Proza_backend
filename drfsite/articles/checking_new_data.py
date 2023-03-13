@@ -21,6 +21,7 @@ def levenshtein_distance(s, t):
     return d[m][n]
 
 
+
 def check_similarity(text1, text2):
     distance = levenshtein_distance(text1, text2)
     similarity = 1 - distance / max(len(text1), len(text2))

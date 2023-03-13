@@ -24,6 +24,8 @@ from django.shortcuts import get_object_or_404, redirect
 from django.shortcuts import render
 # Custom anti-plagiarism & censorship
 from .checking_new_data import censorship, anti_plagiarism
+
+
 class ArticleAPIList(generics.ListAPIView):
     queryset = Article.objects.filter(is_published=True)
     serializer_class = ArticleSerializer
@@ -57,15 +59,12 @@ class ArticleAPICreate(generics.CreateAPIView):
 
 class ArticleAPIUpdate(generics.RetrieveUpdateAPIView):
     queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
+    serializer_class = ArticleUpdateDodikSerializer
     permission_classes = (IsOwnerOrReadOnly,)
 
-    def get_content_from_all_Articles(self):
-        all_content = [article.content for article in self.queryset.all()]
-        return all_content
-
-    def update(self, request):
-        all_content = [article.content for article in self.queryset.all()]
+    def update(self, request, **kwargs):
+        all_content = [article.content for article in self.queryset.all() if article.pk != kwargs['pk']]
+        instance = self.get_object()
         new_poem = request.data.get("content")
         plagiarism = anti_plagiarism(new_poem, all_content)
         if plagiarism != 0:
@@ -73,10 +72,10 @@ class ArticleAPIUpdate(generics.RetrieveUpdateAPIView):
                                      "plagiarism_source": self.queryset[plagiarism - 1].pk,
                                      "status_code": 0})
             return response
-
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.update(instance, serializer.validated_data)
+
         return Response({"article": serializer.data, "status_code": 1})
 
 
@@ -262,20 +261,19 @@ class ProzaUserProfileAPI(generics.RetrieveAPIView):
         return ProzaUser.objects.get(user__username=self.kwargs['slug'])
 
 
-class SubscriptionAPI(generics.RetrieveUpdateAPIView):
+class SubscriptionAPI(generics.UpdateAPIView):
     serializer_class = ProzaUserSubscriptionSerializer
-    queryset = ProzaUser.objects.all()
-    lookup_field = 'user__username'
+
     def update(self, request, *args, **kwargs):
-        subscriber = ProzaUser.objects.get(user=self.request.user)
-        user = ProzaUser.objects.get(user__username=self.kwargs['slug'])
-        if user.subscribers.filter(id=subscriber.id).exists():
-            user.subscribers.remove(subscriber)
-            subscriber.follows.remove(user)
+        subscriber = ProzaUser.objects.get(user=request.user)
+        proza_user = ProzaUser.objects.get(user__username=kwargs['slug'])
+        if proza_user.subscribers.filter(id=subscriber.id).exists():
+            proza_user.subscribers.remove(subscriber)
+            subscriber.follows.remove(proza_user)
             return Response({'massage': 'subscribe canceled'})
         else:
-            user.subscribers.add(subscriber)
-            subscriber.follows.add(user)
+            proza_user.subscribers.add(subscriber)
+            subscriber.follows.add(proza_user)
             return Response({'massage': 'subscribe success'})
 
 
@@ -317,3 +315,9 @@ class RecommendationAPI(generics.ListAPIView):
         proza_user = ProzaUser.objects.get(user=self.request.user)
         fav_category = proza_user.fav_category.all()
         return Article.objects.filter(cat__in=fav_category)
+
+
+class ProzaUserAPIUpdate(generics.RetrieveUpdateAPIView):
+    queryset = ProzaUser.objects.all()
+    serializer_class = ProzaUserUpdateSerializer
+    permission_classes = (IsOwnerOrReadOnly,)
