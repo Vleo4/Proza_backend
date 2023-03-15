@@ -310,14 +310,23 @@ class ArticleFromCategoryAPI(generics.ListAPIView):
 
 class RecommendationAPI(generics.ListAPIView):
     serializer_class = ArticleSerializer
-
+    permission_classes = (IsAuthenticated,)
     def get_queryset(self):
         proza_user = ProzaUser.objects.get(user=self.request.user)
         fav_category = proza_user.fav_category.all()
-        return Article.objects.filter(cat__in=fav_category)
+        return Article.objects.filter(cat__in=fav_category).order_by('-time_create').exclude(is_published=False)
 
 
 class ProzaUserAPIUpdate(generics.RetrieveUpdateAPIView):
     queryset = ProzaUser.objects.all()
     serializer_class = ProzaUserUpdateSerializer
     permission_classes = (IsOwnerOrReadOnly,)
+
+class RecommendationFollowsAPI(generics.ListAPIView):
+    serializer_class = ArticleSerializer
+    permission_classes = (IsAuthenticated,)
+    queryset = Article.objects.all()
+    def get_queryset(self):
+        proza_user = ProzaUser.objects.get(user=self.request.user)
+        follows = [follow.user.id for follow in proza_user.follows.all()]
+        return Article.objects.filter(user__in=follows).order_by('-time_create').exclude(is_published=False)
