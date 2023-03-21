@@ -105,7 +105,7 @@ class ProzaUserSerializer(serializers.ModelSerializer):
 class ProzaUserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProzaUser
-        fields = ('nickname', 'description',)
+        fields = ('nickname', 'description', 'fav_category')
 
 class UserAchievementSerializer(serializers.ModelSerializer):
     user = UserSerializer
