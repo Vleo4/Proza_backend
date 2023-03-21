@@ -56,12 +56,12 @@ class ArticleAPICreate(generics.CreateAPIView):
     def post(self, request):
         all_poems = self.get_content_from_all_Articles()
         new_poem = request.data.get("content")
-        plagiarism = anti_plagiarism(new_poem, all_poems)
-        if plagiarism != 0:
-            response = JsonResponse({"massage": 'Plagiarism',
-                                     "plagiarism_source": self.queryset[plagiarism - 1].pk,
-                                     "status_code": 0})
-            return response
+        #plagiarism = anti_plagiarism(new_poem, all_poems)
+        #if plagiarism != 0:
+        #    response = JsonResponse({"massage": 'Plagiarism',
+        #                             "plagiarism_source": self.queryset[plagiarism - 1].pk,
+        #                             "status_code": 0})
+        #    return response
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

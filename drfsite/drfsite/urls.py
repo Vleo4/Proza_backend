@@ -37,6 +37,6 @@ urlpatterns = [
     path('api/v1/categorylist/', CategoryListAPI.as_view(), name='category-list'),
     path('api/v1/articlefromcategory/<int:pk>/', ArticleFromCategoryAPI.as_view()),
     path('api/v1/recommendations/', RecommendationAPI.as_view()),
-    # re_path(r".*", TemplateView.as_view(template_name='index.html')),
+    #re_path(r".*", TemplateView.as_view(template_name='index.html')),
 
 ]

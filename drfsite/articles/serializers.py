@@ -102,6 +102,8 @@ class UserAchievementSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProzaUser
         fields = "__all__"
+
+
 class ProzaUserProfileSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
 
