@@ -1,11 +1,13 @@
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.generic import TemplateView
+from django.conf.urls.static import static
 from rest_framework import routers
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 from articles.views import *
+from drfsite import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -38,6 +40,6 @@ urlpatterns = [
     path('api/v1/articlefromcategory/<int:pk>/', ArticleFromCategoryAPI.as_view()),
     path('api/v1/recommendations/', RecommendationAPI.as_view()),
     path('api/v1/recommendations/follows/', RecommendationFollowsAPI.as_view()),
-    # re_path(r".*", TemplateView.as_view(template_name='index.html')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-]
+urlpatterns += [re_path(r".*", TemplateView.as_view(template_name='index.html'))]

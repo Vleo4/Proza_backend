@@ -1,10 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-
 # Create your models here.
-
-
 class Article(models.Model):
     title = models.CharField(max_length=250)
     content = models.TextField()
@@ -61,6 +58,7 @@ class ProzaUser(models.Model):
     subscribers = models.ManyToManyField('ProzaUser', related_name='ProzaUser_subscribers')
     fav_category = models.ManyToManyField('Category')
     achieved = models.ManyToManyField('Achievement')
+    photo = models.ImageField(upload_to="photos/%Y/%m/%d/", blank=True) #pip install Pillow==8.0.0
 
 class ReportArticle(models.Model):
     name = models.CharField(max_length=50, db_index=True)
@@ -70,7 +68,6 @@ class ReportArticle(models.Model):
 
     def __str__(self):
         return self.name
-
 
 
 class Achievement(models.Model):

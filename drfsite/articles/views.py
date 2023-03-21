@@ -282,7 +282,6 @@ class TopListAPI(generics.ListAPIView):
     queryset = Article.objects.filter(is_published=True).order_by('-likes')
 
 
-
 class ReportArticleAPI(generics.CreateAPIView):
     serializer_class = ReportArticleSerializer
     queryset = ReportArticle.objects.all()
