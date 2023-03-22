@@ -49,7 +49,7 @@ def anti_plagiarism(new_poem, database):
 
 
 def censorship(validated_text):
-    text = re.sub("[^\w]", " ", validated_text).lower()
+    text = re.sub("[^\w]", " ", validated_text).lower().split()
     roman_names_list = ukrainian_profanity
     for word in text:
         if word in roman_names_list:
