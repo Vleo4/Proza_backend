@@ -13,8 +13,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/article/', ArticleAPIList.as_view()),
     path('api/v1/articlecreate/', ArticleAPICreate.as_view()),
-    path('api/v1/articledelete/<int:pk>', ArticleAPIDestroy.as_view()),
-    path('api/v1/article/<int:pk>/', ArticleAPIUpdate.as_view()),
+    path('api/v1/articledelete/<int:pk>/', ArticleAPIDestroy.as_view()),
+    path('api/v1/article/<int:pk>/', ArticleDetailAPIView.as_view()),
+    path('api/v1/article/update/<int:pk>/', ArticleAPIUpdate.as_view()),
     path('api/v1/register/', RegisterAPI.as_view(), name='register'),
     path('api/v1/getcurrentuserarticles/', CurrentUserArticlesAPIView().as_view()),
     path('api/v1/getuserarticles/<slug:slug>/', UserArticlesAPIView.as_view()),
@@ -31,7 +32,7 @@ urlpatterns = [
     path('api/v1/save/<int:pk>/', SaveArticleAPI.as_view()),
     path('api/v1/savedarticles/', SavedArticlesAPI.as_view()),
     path('api/v1/prozauserprofile/', ProzaUserCurrentProfileAPI.as_view()),
-    path('api/v1/prozauserprofile/<slug:slug>/', ProzaUserProfileAPI.as_view()),
+    path('api/v1/prozauserprofile/<str:slug>/', ProzaUserProfileAPI.as_view()),
     path('api/v1/prozauserprofile/update/<int:pk>/', ProzaUserAPIUpdate.as_view()),
     path('api/v1/subscription/<slug:slug>/', SubscriptionAPI.as_view()),
     path('api/v1/toparticles/', TopListAPI.as_view(), name='top-articles'),
@@ -40,6 +41,7 @@ urlpatterns = [
     path('api/v1/articlefromcategory/<int:pk>/', ArticleFromCategoryAPI.as_view()),
     path('api/v1/recommendations/', RecommendationAPI.as_view()),
     path('api/v1/recommendations/follows/', RecommendationFollowsAPI.as_view()),
+    path('api/v1/userachievements/<int:pk>/', ProzaUserAchievements.as_view()),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-urlpatterns += [re_path(r".*", TemplateView.as_view(template_name='index.html'))]
+#urlpatterns += [re_path(r".*", TemplateView.as_view(template_name='index.html'))]

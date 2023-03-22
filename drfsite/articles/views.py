@@ -54,6 +54,9 @@ class ArticleAPICreate(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        proza_user_id = request.data.get("user")
+        proza_user = ProzaUser.objects.get(id=proza_user_id)
+        proza_user.achieved.add(1)
         return Response({"article": serializer.data, "status_code": 1})
 
 
@@ -78,6 +81,9 @@ class ArticleAPIUpdate(generics.RetrieveUpdateAPIView):
 
         return Response({"article": serializer.data, "status_code": 1})
 
+class ArticleDetailAPIView(generics.RetrieveAPIView):
+    queryset = Article.objects.all()
+    serializer_class = ArticleSerializer
 
 class ArticleAPIDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Article.objects.all()
@@ -158,13 +164,13 @@ class ReviewAPICreate(generics.CreateAPIView):
         try:
             censorship(request.data.get("content"))
         except CensorError:
-            response = JsonResponse({"massage": 'Too much profanity', "status_code": 0})
+            response = JsonResponse({"massage": 'Too much profanity', "status_code": 400})
             return response
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.validated_data['article'].addCountReviews()
         serializer.save()
-        return Response({'review': serializer.data, "status_code": 1})
+        return Response({'review': serializer.data, "status_code": 200})
 
 
 class ReviewAPIList(generics.ListAPIView):
@@ -210,8 +216,6 @@ class ArticleAPILike(generics.UpdateAPIView):
             tmp = article_like.count_of_likes + 1
             article_like.count_of_likes = tmp
             return Response({'message': 'liked'}, status.HTTP_200_OK)
-
-
 
 
 class SaveArticleAPI(generics.UpdateAPIView):
@@ -325,7 +329,13 @@ class RecommendationFollowsAPI(generics.ListAPIView):
     serializer_class = ArticleSerializer
     permission_classes = (IsAuthenticated,)
     queryset = Article.objects.all()
+
     def get_queryset(self):
         proza_user = ProzaUser.objects.get(user=self.request.user)
         follows = [follow.user.id for follow in proza_user.follows.all()]
         return Article.objects.filter(user__in=follows).order_by('-time_create').exclude(is_published=False)
+
+
+class ProzaUserAchievements(generics.RetrieveAPIView):
+    serializer_class = ProzaUserAchSerializer
+    queryset = ProzaUser.objects.all()
